@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ItemTooltip = ({ itemText, className = "" }) => {
+const ItemTooltip = ({ itemText, className = "", direct = false }) => {
   if (!itemText || !itemText.trim()) {
     return null;
   }
@@ -90,11 +90,11 @@ const ItemTooltip = ({ itemText, className = "" }) => {
     return stat.replace(' (desecrated)', '');
   };
 
-  return (
-    <div className={`bg-gray-900 border-2 border-gray-700 rounded-lg p-4 font-mono text-sm max-w-md ${className}`}>
+  const tooltipContent = (
+    <>
       {/* Item Header */}
-      <div className="text-center mb-3">
-        <div className={`text-lg font-bold mb-1 ${getRarityColor(item.rarity)}`}>
+      <div className="text-center mb-2">
+        <div className={`text-lg font-bold ${getRarityColor(item.rarity)}`}>
           {item.name}
         </div>
         {item.baseType && (
@@ -105,74 +105,72 @@ const ItemTooltip = ({ itemText, className = "" }) => {
       </div>
 
       {/* Separator */}
-      {(item.name || item.baseType) && <div className="border-t border-gray-600 my-3"></div>}
+      {(item.name || item.baseType) && <div className="border-t border-gray-600 my-2"></div>}
 
       {/* Item Class */}
       {item.itemClass && (
-        <div className="text-gray-400 mb-1">
+        <div className="text-gray-400 text-sm mb-1">
           Item Class: <span className="text-gray-300">{item.itemClass}</span>
         </div>
       )}
 
       {/* Requirements */}
       {item.requirements.length > 0 && (
-        <div className="text-gray-400 mb-1">
+        <div className="text-gray-400 text-sm mb-1">
           Requires: <span className="text-red-400">{item.requirements.join(', ')}</span>
         </div>
       )}
 
       {/* Separator */}
       {(item.requirements.length > 0 || item.itemClass) && (
-        <div className="border-t border-gray-600 my-3"></div>
+        <div className="border-t border-gray-600 my-2"></div>
       )}
 
       {/* Item Level */}
       {item.itemLevel && (
         <>
-          <div className="text-gray-400 mb-3">
+          <div className="text-gray-400 text-sm mb-1">
             Item Level: <span className="text-gray-300">{item.itemLevel}</span>
           </div>
-          <div className="border-t border-gray-600 my-3"></div>
+          <div className="border-t border-gray-600 my-2"></div>
         </>
       )}
 
       {/* Granted Skill */}
       {item.grantedSkill && (
         <>
-          <div className="text-cyan-400 mb-3 flex items-center">
-            <div className="w-8 h-8 bg-purple-600 rounded mr-2 flex items-center justify-center text-xs">
+          <div className="text-cyan-400 text-sm flex items-center mb-2">
+            <div className="w-5 h-5 bg-purple-600 rounded mr-2 flex items-center justify-center text-xs">
               💎
             </div>
             {item.grantedSkill}
           </div>
-          <div className="border-t border-gray-600 my-3"></div>
+          <div className="border-t border-gray-600 my-2"></div>
         </>
       )}
 
       {/* Stats */}
       {item.stats.length > 0 && (
-        <div className="space-y-1 mb-3">
+        <div className="space-y-1 mb-2">
           {item.stats.map((stat, index) => (
-            <div key={index} className={getStatColor(stat)}>
+            <div key={index} className={`${getStatColor(stat)} text-sm`}>
               {formatStat(stat)}
             </div>
           ))}
         </div>
-      )}
+      )}    
+    </>
+  );
 
-      {/* Note/Price */}
-      {item.note && (
-        <>
-          <div className="border-t border-gray-600 my-3"></div>
-          <div className="text-center">
-            <div className="text-gray-400 text-xs mb-1">ASKING PRICE:</div>
-            <div className="text-yellow-400 font-bold flex items-center justify-center">
-              {item.note.replace('~b/o', '').trim()}
-              <span className="ml-1">⚜</span> Divine Orb
-            </div>
-          </div>
-        </>
-      )}
+  // If direct mode, return just the content without container
+  if (direct) {
+    return <div className={`font-mono text-sm ${className}`}>{tooltipContent}</div>;
+  }
+
+  // Otherwise return with the traditional tooltip container
+  return (
+    <div className={`bg-gray-900 border-2 border-gray-700 rounded-lg p-3 font-mono text-sm max-w-sm ${className}`}>
+      {tooltipContent}
     </div>
   );
 };

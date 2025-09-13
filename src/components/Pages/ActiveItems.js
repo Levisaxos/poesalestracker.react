@@ -4,16 +4,17 @@ import ItemCard from '../Common/ItemCard';
 import { Package, Plus, Search, Filter } from 'lucide-react';
 
 const ActiveItems = ({ onNavigate }) => {
-  const { getActiveItems } = usePoEItems();
+  const { getActiveItems, items } = usePoEItems(); // Add items to force re-render
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   
+  // Force component to re-render when items array changes
   const activeItems = getActiveItems();
   
   const filteredItems = activeItems
     .filter(item => 
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase())
+      (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
       switch (sortBy) {
@@ -89,7 +90,7 @@ const ActiveItems = ({ onNavigate }) => {
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
-            <ItemCard key={item.id} item={item} showActions={true} />
+            <ItemCard key={`${item.id}-${Date.now()}`} item={item} showActions={true} />
           ))}
         </div>
       ) : (

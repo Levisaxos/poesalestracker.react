@@ -5,7 +5,9 @@ import { getCurrency } from '../../constants/currencies';
 import { Package, TrendingUp, Plus, DollarSign, Target } from 'lucide-react';
 
 const Dashboard = ({ onNavigate }) => {
-  const { getStats, getActiveItems, getSoldItems } = usePoEItems();
+  const { getStats, getActiveItems, getSoldItems, items } = usePoEItems();
+  
+  // Force re-render when items change by accessing the items array directly
   const stats = getStats();
   const recentActive = getActiveItems().slice(0, 3);
   const recentSold = getSoldItems().slice(0, 3);
@@ -71,7 +73,7 @@ const Dashboard = ({ onNavigate }) => {
           className="flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium"
         >
           <Plus size={20} />
-          Add Your First Item
+          {items.length === 0 ? 'Add Your First Item' : 'Add New Item'}
         </button>
       </div>
 
@@ -119,7 +121,7 @@ const Dashboard = ({ onNavigate }) => {
               onClick={() => onNavigate('active')}
               className="text-blue-400 hover:text-blue-300 text-sm font-medium"
             >
-              View All
+              View All ({stats.activeCount})
             </button>
           </div>
           <div className="space-y-3">
@@ -128,7 +130,16 @@ const Dashboard = ({ onNavigate }) => {
                 <ItemPreview key={item.id} item={item} />
               ))
             ) : (
-              <p className="text-slate-400 text-center py-8">No active items yet</p>
+              <div className="text-slate-400 text-center py-8">
+                <Package size={48} className="mx-auto mb-2 text-slate-600" />
+                <p>No active items yet</p>
+                <button
+                  onClick={() => onNavigate('create')}
+                  className="text-amber-400 hover:text-amber-300 text-sm font-medium mt-2"
+                >
+                  Add your first item →
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -141,7 +152,7 @@ const Dashboard = ({ onNavigate }) => {
               onClick={() => onNavigate('sold')}
               className="text-green-400 hover:text-green-300 text-sm font-medium"
             >
-              View All
+              View All ({stats.soldCount})
             </button>
           </div>
           <div className="space-y-3">
@@ -150,11 +161,34 @@ const Dashboard = ({ onNavigate }) => {
                 <ItemPreview key={item.id} item={item} showProfit={true} />
               ))
             ) : (
-              <p className="text-slate-400 text-center py-8">No sales yet</p>
+              <div className="text-slate-400 text-center py-8">
+                <TrendingUp size={48} className="mx-auto mb-2 text-slate-600" />
+                <p>No sales yet</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Mark items as sold to see them here
+                </p>
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Quick Stats Summary */}
+      {items.length > 0 && (
+        <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/30 p-4">
+          <h3 className="text-white font-medium mb-2">Quick Summary</h3>
+          <div className="text-sm text-slate-400">
+            You have <span className="text-white font-medium">{stats.activeCount}</span> active items worth{' '}
+            <span className="text-amber-400 font-medium">
+              {getActiveItems().reduce((sum, item) => sum + item.expectedPrice, 0).toFixed(1)}♦
+            </span> total, 
+            and <span className="text-white font-medium">{stats.soldCount}</span> completed sales with{' '}
+            <span className={`font-medium ${stats.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {stats.totalProfit >= 0 ? '+' : ''}{stats.totalProfit.toFixed(1)}♦
+            </span> profit.
+          </div>
+        </div>
+      )}
     </div>
   );
 };

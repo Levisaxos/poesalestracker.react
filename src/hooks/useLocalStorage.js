@@ -19,7 +19,8 @@ const useLocalStorage = (key, initialValue) => {
     } catch (error) {
       console.error(`Error setting localStorage key "${key}":`, error);
       if (error.name === 'QuotaExceededError') {
-        alert('Storage quota exceeded. Consider exporting and clearing old items.');
+        // We'll handle this with a modal instead of alert
+        throw new Error('Storage quota exceeded. Consider exporting and clearing old items.');
       }
     }
   };
@@ -50,9 +51,14 @@ export const usePoEItems = () => {
   };
 
   const deleteItem = (id) => {
-    console.log('Deleting item with ID:', id); // Debug log
+    console.log('Deleting item with ID:', id, typeof id); // Debug log
     setItems(prev => {
-      const newItems = prev.filter(item => item.id !== id);
+      const newItems = prev.filter(item => {
+        // Ensure we're comparing the right types
+        const itemId = typeof item.id === 'string' ? parseFloat(item.id) : item.id;
+        const targetId = typeof id === 'string' ? parseFloat(id) : id;
+        return itemId !== targetId;
+      });
       console.log('Items before delete:', prev.length, 'Items after delete:', newItems.length); // Debug log
       return newItems;
     });
@@ -60,10 +66,16 @@ export const usePoEItems = () => {
 
   const markAsSold = (id, actualPrice, actualCurrency = null) => {
     const soldAt = new Date().toISOString();
+    const currentItem = items.find(item => {
+      const itemId = typeof item.id === 'string' ? parseFloat(item.id) : item.id;
+      const targetId = typeof id === 'string' ? parseFloat(id) : id;
+      return itemId === targetId;
+    });
+    
     updateItem(id, { 
       status: 'sold', 
       actualPrice: parseFloat(actualPrice), 
-      actualCurrency: actualCurrency || items.find(item => item.id === id)?.currency || 'divine',
+      actualCurrency: actualCurrency || currentItem?.currency || 'divine',
       soldAt 
     });
   };

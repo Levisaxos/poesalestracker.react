@@ -25,7 +25,7 @@ const CurrencySelector = ({ value, onChange, size = 'normal', showLabel = true }
       >
         {Object.entries(CURRENCIES).map(([key, currency]) => (
           <option key={key} value={key}>
-            {showLabel ? currency.name : currency.symbol}
+            {showLabel ? currency.name : key.charAt(0).toUpperCase() + key.slice(1)}
           </option>
         ))}
       </select>
