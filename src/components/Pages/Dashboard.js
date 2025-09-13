@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePoEItems } from '../../hooks/useLocalStorage';
 import { getCurrencyDisplay } from '../Common/CurrencySelector';
 import { getCurrency } from '../../constants/currencies';
 import { Package, TrendingUp, Plus, DollarSign, Target } from 'lucide-react';
 
 const Dashboard = ({ onNavigate }) => {
-  const { getStats, getActiveItems, getSoldItems, items } = usePoEItems();
+  const { getStats, getActiveItems, getSoldItems, items, updateTrigger } = usePoEItems();
+  const [refreshKey, setRefreshKey] = useState(0);
   
+  // Force re-render when updateTrigger changes
+  useEffect(() => {
+    setRefreshKey(Date.now());
+  }, [items, updateTrigger]);
+
   // Force re-render when items change by accessing the items array directly
   const stats = getStats();
   const recentActive = getActiveItems().slice(0, 3);
@@ -61,7 +67,7 @@ const Dashboard = ({ onNavigate }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" key={refreshKey}>
       {/* Welcome Section */}
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
         <h1 className="text-3xl font-bold text-white mb-2">Welcome to PoE Sales Tracker</h1>
@@ -127,7 +133,7 @@ const Dashboard = ({ onNavigate }) => {
           <div className="space-y-3">
             {recentActive.length > 0 ? (
               recentActive.map(item => (
-                <ItemPreview key={item.id} item={item} />
+                <ItemPreview key={`active-${item.id}-${refreshKey}`} item={item} />
               ))
             ) : (
               <div className="text-slate-400 text-center py-8">
@@ -158,7 +164,7 @@ const Dashboard = ({ onNavigate }) => {
           <div className="space-y-3">
             {recentSold.length > 0 ? (
               recentSold.map(item => (
-                <ItemPreview key={item.id} item={item} showProfit={true} />
+                <ItemPreview key={`sold-${item.id}-${refreshKey}`} item={item} showProfit={true} />
               ))
             ) : (
               <div className="text-slate-400 text-center py-8">

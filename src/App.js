@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Header from './components/Layout/Header';
+import Footer from './components/Layout/Footer';
 import Dashboard from './components/Pages/Dashboard';
 import ActiveItems from './components/Pages/ActiveItems';
 import SoldItems from './components/Pages/SoldItems';
@@ -24,11 +25,12 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       <Header currentPage={currentPage} onNavigate={setCurrentPage} />
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      <main className="flex-1 max-w-7xl mx-auto px-6 py-6 w-full">
         {renderPage()}
       </main>
+      <Footer />
     </div>
   );
 };

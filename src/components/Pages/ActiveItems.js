@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePoEItems } from '../../hooks/useLocalStorage';
 import ItemCard from '../Common/ItemCard';
 import { Package, Plus, Search, Filter } from 'lucide-react';
 
 const ActiveItems = ({ onNavigate }) => {
-  const { getActiveItems, items } = usePoEItems(); // Add items to force re-render
+  const { getActiveItems, items, updateTrigger } = usePoEItems(); // Add updateTrigger
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [updateKey, setUpdateKey] = useState(0);
   
-  // Force component to re-render when items array changes
+  // Force component to re-render when items array changes OR updateTrigger changes
+  useEffect(() => {
+    setUpdateKey(Date.now());
+  }, [items.length, items, updateTrigger]);
+
   const activeItems = getActiveItems();
   
   const filteredItems = activeItems
@@ -89,8 +94,12 @@ const ActiveItems = ({ onNavigate }) => {
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map(item => (
-            <ItemCard key={`${item.id}-${Date.now()}`} item={item} showActions={true} />
+          {filteredItems.map((item, index) => (
+            <ItemCard 
+              key={`${item.id}-${item.expectedPrice}-${updateTrigger}`} 
+              item={item} 
+              showActions={true} 
+            />
           ))}
         </div>
       ) : (

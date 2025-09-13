@@ -31,16 +31,38 @@ const useLocalStorage = (key, initialValue) => {
 // Helper functions for PoE items
 export const usePoEItems = () => {
   const [items, setItems] = useLocalStorage('poeItems', []);
+  const [updateTrigger, setUpdateTrigger] = useState(0);
+
+  console.log('🏗️ usePoEItems hook - items length:', items.length, 'updateTrigger:', updateTrigger);
+
+  // Force re-render by incrementing trigger
+  const forceUpdate = () => {
+    console.log('💫 forceUpdate called, current trigger:', updateTrigger);
+    setUpdateTrigger(prev => {
+      const newValue = prev + 1;
+      console.log('💫 updateTrigger changed from', prev, 'to', newValue);
+      return newValue;
+    });
+  };
 
   const addItem = (newItem) => {
+    const now = new Date().toISOString();
     const item = {
       id: Date.now() + Math.random(),
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       status: 'active', // 'active' or 'sold'
       currency: 'divine', // default currency
+      priceHistory: [
+        {
+          price: newItem.expectedPrice,
+          changedAt: now,
+          reason: 'initial_listing'
+        }
+      ],
       ...newItem
     };
     setItems(prev => [item, ...prev]);
+    forceUpdate();
     return item.id;
   };
 
@@ -48,6 +70,30 @@ export const usePoEItems = () => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, ...updates } : item
     ));
+    forceUpdate();
+  };
+
+  const updateItemPrice = (id, newPrice) => {
+    setItems(prev => prev.map(item => {
+      if (item.id === id) {
+        // Add to price history
+        const newPriceEntry = {
+          price: newPrice,
+          changedAt: new Date().toISOString(),
+          reason: 'manual_update'
+        };
+        
+        const updatedPriceHistory = [newPriceEntry, ...(item.priceHistory || [])];
+        
+        return {
+          ...item,
+          expectedPrice: newPrice,
+          priceHistory: updatedPriceHistory
+        };
+      }
+      return item;
+    }));
+    forceUpdate();
   };
 
   const deleteItem = (id) => {
@@ -62,6 +108,7 @@ export const usePoEItems = () => {
       console.log('Items before delete:', prev.length, 'Items after delete:', newItems.length); // Debug log
       return newItems;
     });
+    forceUpdate();
   };
 
   const markAsSold = (id, actualPrice, actualCurrency = null) => {
@@ -72,12 +119,26 @@ export const usePoEItems = () => {
       return itemId === targetId;
     });
     
-    updateItem(id, { 
+    // Add final price to history if different from current price
+    const updates = { 
       status: 'sold', 
       actualPrice: parseFloat(actualPrice), 
       actualCurrency: actualCurrency || currentItem?.currency || 'divine',
       soldAt 
-    });
+    };
+
+    // If the sold price is different from expected price, add it to history
+    if (currentItem && parseFloat(actualPrice) !== currentItem.expectedPrice) {
+      const finalPriceEntry = {
+        price: parseFloat(actualPrice),
+        changedAt: soldAt,
+        reason: 'final_sale_price'
+      };
+      
+      updates.priceHistory = [finalPriceEntry, ...(currentItem.priceHistory || [])];
+    }
+    
+    updateItem(id, updates);
   };
 
   const getActiveItems = () => items.filter(item => item.status === 'active');
@@ -105,13 +166,15 @@ export const usePoEItems = () => {
     items,
     addItem,
     updateItem,
+    updateItemPrice,
     deleteItem,
     markAsSold,
     getActiveItems,
     getSoldItems,
     getStats,
     exportData: () => items,
-    importData: setItems
+    importData: setItems,
+    updateTrigger // Export this so components can depend on it
   };
 };
 

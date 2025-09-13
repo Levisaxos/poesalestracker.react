@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { usePoEItems } from '../../hooks/useLocalStorage';
 import ItemTooltip from './ItemTooltip';
+import PriceHistoryModal from './PriceHistoryModal';
 import { getCurrency } from '../../constants/currencies';
 import { getTimeListedText, getTimeSoldText } from '../../utils/timeUtils';
 import { ErrorModal, DeleteModal, SoldModal } from './ItemCardModals';
-import { Trash2, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { Trash2, DollarSign, Clock, CheckCircle, Edit3, TrendingUp, TrendingDown } from 'lucide-react';
 
-const ItemCard = ({ item, showActions = false, showProfit = false }) => {
-  const { deleteItem, markAsSold } = usePoEItems();
+const ItemCard = ({ item, showActions = false, showProfit = false, key }) => {
+  const { deleteItem, markAsSold, updateItemPrice } = usePoEItems();
   const [showSoldModal, setShowSoldModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -39,6 +41,22 @@ const ItemCard = ({ item, showActions = false, showProfit = false }) => {
     }
   };
 
+  const handlePriceUpdate = (itemId, newPrice) => {
+    console.log('💰 ItemCard - handlePriceUpdate called:', { itemId, newPrice });
+    try {
+      updateItemPrice(itemId, newPrice);
+      console.log('✅ ItemCard - updateItemPrice completed successfully');
+    } catch (error) {
+      console.error('❌ ItemCard - updateItemPrice failed:', error);
+      showError('Failed to update price: ' + error.message);
+    }
+  };
+
+  // Check if price has changed from initial
+  const hasMultiplePrices = item.priceHistory && item.priceHistory.length > 1;
+  const priceChange = hasMultiplePrices ? 
+    item.expectedPrice - item.priceHistory[item.priceHistory.length - 1].price : 0;
+
   return (
     <>
       <div className="bg-gray-900 border-2 border-gray-700 rounded-xl overflow-hidden hover:bg-gray-800 transition-all duration-200 flex flex-col relative">
@@ -48,6 +66,22 @@ const ItemCard = ({ item, showActions = false, showProfit = false }) => {
             <span className="flex items-center gap-1 px-2 py-1 bg-green-600/20 text-green-400 rounded-full text-xs font-medium">
               <CheckCircle size={12} />
               Sold
+            </span>
+          </div>
+        )}
+
+        {/* Price Change Indicator */}
+        {hasMultiplePrices && showActions && (
+          <div className="absolute top-2 left-2 z-10">
+            <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+              priceChange > 0 ? 'bg-green-600/20 text-green-400' : 
+              priceChange < 0 ? 'bg-red-600/20 text-red-400' : 
+              'bg-blue-600/20 text-blue-400'
+            }`}>
+              {priceChange > 0 ? <TrendingUp size={12} /> : 
+               priceChange < 0 ? <TrendingDown size={12} /> : 
+               <Edit3 size={12} />}
+              {priceChange !== 0 ? `${priceChange > 0 ? '+' : ''}${priceChange.toFixed(1)}` : 'Updated'}
             </span>
           </div>
         )}
@@ -69,7 +103,7 @@ const ItemCard = ({ item, showActions = false, showProfit = false }) => {
           {/* Pricing Row */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-slate-300 text-sm font-medium">
-              {showProfit ? 'Sale Price' : 'Requested Price'}
+              {showProfit ? 'Sale Price' : 'Current Price'}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-amber-400 font-bold text-lg">
@@ -112,6 +146,13 @@ const ItemCard = ({ item, showActions = false, showProfit = false }) => {
             {showActions && item.status === 'active' && (
               <div className="flex gap-2">
                 <button
+                  onClick={() => setShowPriceModal(true)}
+                  className="flex items-center gap-1 px-2 py-1.5 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded transition-colors font-medium"
+                  title="Change Price"
+                >
+                  <Edit3 size={12} />
+                </button>
+                <button
                   onClick={() => setShowSoldModal(true)}
                   className="flex items-center gap-1 px-3 py-1.5 text-xs bg-green-700 hover:bg-green-600 text-white rounded transition-colors font-medium"
                 >
@@ -148,6 +189,12 @@ const ItemCard = ({ item, showActions = false, showProfit = false }) => {
         expectedPrice={item.expectedPrice} 
         onSubmit={handleMarkAsSold} 
         onCancel={() => setShowSoldModal(false)} 
+      />
+      <PriceHistoryModal
+        show={showPriceModal}
+        item={item}
+        onUpdatePrice={handlePriceUpdate}
+        onClose={() => setShowPriceModal(false)}
       />
     </>
   );

@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePoEItems } from '../../hooks/useLocalStorage';
 import ItemCard from '../Common/ItemCard';
 import { TrendingUp, Search, Filter, Download } from 'lucide-react';
 
 const SoldItems = ({ onNavigate }) => {
-  const { getSoldItems, getStats } = usePoEItems();
+  const { getSoldItems, getStats, updateTrigger } = usePoEItems();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [refreshKey, setRefreshKey] = useState(0);
   
+  // Force re-render when updateTrigger changes
+  useEffect(() => {
+    setRefreshKey(Date.now());
+  }, [updateTrigger]);
+
   const soldItems = getSoldItems();
   const stats = getStats();
   
@@ -71,7 +77,7 @@ const SoldItems = ({ onNavigate }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" key={refreshKey}>
       {/* Header with Stats */}
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -155,7 +161,7 @@ const SoldItems = ({ onNavigate }) => {
       {filteredItems.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.map(item => (
-            <ItemCard key={item.id} item={item} showProfit={true} />
+            <ItemCard key={`sold-${item.id}-${refreshKey}`} item={item} showProfit={true} />
           ))}
         </div>
       ) : (
