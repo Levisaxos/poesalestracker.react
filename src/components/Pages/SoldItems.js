@@ -3,7 +3,7 @@ import { usePoEItems } from '../../hooks/useLocalStorage';
 import ItemCard from '../Common/ItemCard';
 import { TrendingUp, Search, Filter, Download } from 'lucide-react';
 
-const SoldItems = () => {
+const SoldItems = ({ onNavigate }) => {
   const { getSoldItems, getStats } = usePoEItems();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');

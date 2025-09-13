@@ -1,6 +1,8 @@
 import React from 'react';
 import { usePoEItems } from '../../hooks/useLocalStorage';
-import { Package, TrendingUp, Plus, DollarSign, Target, TrendingDown } from 'lucide-react';
+import { getCurrencyDisplay } from '../Common/CurrencySelector';
+import { getCurrency } from '../../constants/currencies';
+import { Package, TrendingUp, Plus, DollarSign, Target } from 'lucide-react';
 
 const Dashboard = ({ onNavigate }) => {
   const { getStats, getActiveItems, getSoldItems } = usePoEItems();
@@ -28,26 +30,28 @@ const Dashboard = ({ onNavigate }) => {
 
   const ItemPreview = ({ item, showProfit = false }) => (
     <div className="flex items-center gap-3 p-3 bg-slate-700/30 rounded-lg">
-      {item.image && (
-        <img 
-          src={item.image} 
-          alt={item.name} 
-          className="w-12 h-12 object-cover rounded"
-        />
-      )}
       <div className="flex-1 min-w-0">
         <h4 className="text-white font-medium truncate">{item.name}</h4>
-        <p className="text-sm text-slate-400 truncate">{item.description}</p>
+        <p className="text-sm text-slate-400 truncate">
+          {item.description?.split('\n')[0] || 'No description'}
+        </p>
       </div>
       <div className="text-right">
-        <div className="text-amber-400 font-medium">
-          {item.expectedPrice}♦
+        <div className="font-medium">
+          {getCurrencyDisplay(item.currency || 'divine', item.expectedPrice)}
         </div>
         {showProfit && item.actualPrice && (
-          <div className={`text-sm ${
+          <div className={`text-sm flex items-center gap-1 ${
             (item.actualPrice - item.expectedPrice) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {item.actualPrice >= item.expectedPrice ? '+' : ''}{(item.actualPrice - item.expectedPrice).toFixed(1)}♦
+            {item.actualPrice >= item.expectedPrice ? '+' : ''}
+            {(item.actualPrice - item.expectedPrice).toFixed(1)}
+            <img 
+              src={getCurrency(item.actualCurrency || item.currency || 'divine').image}
+              alt="currency"
+              style={{ width: '14px', height: '14px' }}
+              className="inline-block"
+            />
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@ import { usePoEItems } from '../../hooks/useLocalStorage';
 import ItemCard from '../Common/ItemCard';
 import { Package, Plus, Search, Filter } from 'lucide-react';
 
-const ActiveItems = () => {
+const ActiveItems = ({ onNavigate }) => {
   const { getActiveItems } = usePoEItems();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -45,7 +45,10 @@ const ActiveItems = () => {
               {activeItems.length} items listed • {totalValue.toFixed(1)}♦ total value
             </p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium">
+          <button 
+            onClick={() => onNavigate('create')}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium"
+          >
             <Plus size={18} />
             Add Item
           </button>
@@ -102,7 +105,10 @@ const ActiveItems = () => {
             }
           </p>
           {!searchTerm && (
-            <button className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium">
+            <button 
+              onClick={() => onNavigate('create')}
+              className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors font-medium"
+            >
               <Plus size={20} className="inline mr-2" />
               Add Your First Item
             </button>

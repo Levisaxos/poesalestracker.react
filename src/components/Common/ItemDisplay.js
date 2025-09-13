@@ -1,16 +1,87 @@
-import React, { useState } from 'react';
-import ImageUpload from './ImageUpload';
+import React, { useState, useRef } from 'react';
 import ItemTooltip from './ItemTooltip';
-import { Image as ImageIcon, FileText, Eye } from 'lucide-react';
+import { Image as ImageIcon, FileText, Eye, Upload, X } from 'lucide-react';
 
 const ItemDisplay = ({ onImageChange, onStatsChange, initialImage = null, initialStats = '', className = "" }) => {
   const [viewMode, setViewMode] = useState('image'); // 'image', 'tooltip', 'both'
   const [itemStats, setItemStats] = useState(initialStats);
+  const [image, setImage] = useState(initialImage);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleStatsChange = (value) => {
     setItemStats(value);
     onStatsChange && onStatsChange(value);
   };
+
+  const handleImageChange = (imageData) => {
+    setImage(imageData);
+    onImageChange && onImageChange(imageData);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+      const file = files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handleImageChange(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        handleImageChange(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePaste = (e) => {
+    const items = Array.from(e.clipboardData.items);
+    for (let item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          handleImageChange(e.target.result);
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    handleImageChange(null);
+  };
+
+  // Add paste event listener
+  React.useEffect(() => {
+    document.addEventListener('paste', handlePaste);
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, []);
 
   return (
     <div className={className}>

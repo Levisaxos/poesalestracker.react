@@ -13,9 +13,9 @@ const App = () => {
       case 'dashboard':
         return <Dashboard onNavigate={setCurrentPage} />;
       case 'active':
-        return <ActiveItems />;
+        return <ActiveItems onNavigate={setCurrentPage} />;
       case 'sold':
-        return <SoldItems />;
+        return <SoldItems onNavigate={setCurrentPage} />;
       case 'create':
         return <CreateItem onNavigate={setCurrentPage} />;
       default:

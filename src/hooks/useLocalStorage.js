@@ -36,6 +36,7 @@ export const usePoEItems = () => {
       id: Date.now() + Math.random(),
       createdAt: new Date().toISOString(),
       status: 'active', // 'active' or 'sold'
+      currency: 'divine', // default currency
       ...newItem
     };
     setItems(prev => [item, ...prev]);
@@ -49,20 +50,26 @@ export const usePoEItems = () => {
   };
 
   const deleteItem = (id) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    console.log('Deleting item with ID:', id); // Debug log
+    setItems(prev => {
+      const newItems = prev.filter(item => item.id !== id);
+      console.log('Items before delete:', prev.length, 'Items after delete:', newItems.length); // Debug log
+      return newItems;
+    });
   };
 
-  const markAsSold = (id, actualPrice) => {
+  const markAsSold = (id, actualPrice, actualCurrency = null) => {
     const soldAt = new Date().toISOString();
     updateItem(id, { 
       status: 'sold', 
       actualPrice: parseFloat(actualPrice), 
+      actualCurrency: actualCurrency || items.find(item => item.id === id)?.currency || 'divine',
       soldAt 
     });
   };
 
   const getActiveItems = () => items.filter(item => item.status === 'active');
-  const getSoldItems = () => items.filter(item => item.status === 'sold');
+  const getSoldItems = () => items.filter(item => item.status === 'sold').sort((a, b) => new Date(b.soldAt) - new Date(a.soldAt));
 
   const getStats = () => {
     const soldItems = getSoldItems();
