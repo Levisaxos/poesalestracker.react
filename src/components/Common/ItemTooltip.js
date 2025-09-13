@@ -1,0 +1,180 @@
+import React from 'react';
+
+const ItemTooltip = ({ itemText, className = "" }) => {
+  if (!itemText || !itemText.trim()) {
+    return null;
+  }
+
+  const parseItemText = (text) => {
+    const lines = text.trim().split('\n');
+    const item = {
+      itemClass: '',
+      rarity: 'Normal',
+      name: '',
+      baseType: '',
+      requirements: [],
+      itemLevel: '',
+      grantedSkill: '',
+      stats: [],
+      note: ''
+    };
+
+    let currentSection = 'header';
+    
+    for (let line of lines) {
+      line = line.trim();
+      
+      if (line === '--------') {
+        continue;
+      }
+      
+      if (line.startsWith('Item Class:')) {
+        item.itemClass = line.replace('Item Class:', '').trim();
+      } else if (line.startsWith('Rarity:')) {
+        item.rarity = line.replace('Rarity:', '').trim();
+      } else if (line.startsWith('Requires:')) {
+        item.requirements.push(line.replace('Requires:', '').trim());
+      } else if (line.startsWith('Item Level:')) {
+        item.itemLevel = line.replace('Item Level:', '').trim();
+      } else if (line.startsWith('Grants Skill:')) {
+        item.grantedSkill = line.replace('Grants Skill:', '').trim();
+      } else if (line.startsWith('Note:')) {
+        item.note = line.replace('Note:', '').trim();
+      } else if (line && !line.includes(':') && item.name === '') {
+        // First non-special line is the item name
+        item.name = line;
+      } else if (line && !line.includes(':') && item.baseType === '' && item.name !== '') {
+        // Second non-special line is the base type
+        item.baseType = line;
+      } else if (line && (line.includes('%') || line.includes('+') || line.includes('-') || line.includes('to'))) {
+        // Stats lines
+        item.stats.push(line);
+      }
+    }
+    
+    return item;
+  };
+
+  const item = parseItemText(itemText);
+
+  const getRarityColor = (rarity) => {
+    switch (rarity.toLowerCase()) {
+      case 'normal': return 'text-gray-300';
+      case 'magic': return 'text-blue-400';
+      case 'rare': return 'text-yellow-400';
+      case 'unique': return 'text-orange-400';
+      case 'gem': return 'text-cyan-400';
+      case 'currency': return 'text-yellow-300';
+      default: return 'text-gray-300';
+    }
+  };
+
+  const getStatColor = (stat) => {
+    if (stat.includes('(desecrated)')) {
+      return 'text-red-400';
+    }
+    if (stat.includes('Chaos') || stat.includes('chaos')) {
+      return 'text-purple-400';
+    }
+    if (stat.includes('+') || stat.includes('increased') || stat.includes('more')) {
+      return 'text-blue-400';
+    }
+    if (stat.includes('Grants Skill')) {
+      return 'text-cyan-400';
+    }
+    return 'text-blue-400';
+  };
+
+  const formatStat = (stat) => {
+    // Remove (desecrated) for display but keep color indication
+    return stat.replace(' (desecrated)', '');
+  };
+
+  return (
+    <div className={`bg-gray-900 border-2 border-gray-700 rounded-lg p-4 font-mono text-sm max-w-md ${className}`}>
+      {/* Item Header */}
+      <div className="text-center mb-3">
+        <div className={`text-lg font-bold mb-1 ${getRarityColor(item.rarity)}`}>
+          {item.name}
+        </div>
+        {item.baseType && (
+          <div className="text-gray-400 text-base">
+            {item.baseType}
+          </div>
+        )}
+      </div>
+
+      {/* Separator */}
+      {(item.name || item.baseType) && <div className="border-t border-gray-600 my-3"></div>}
+
+      {/* Item Class */}
+      {item.itemClass && (
+        <div className="text-gray-400 mb-1">
+          Item Class: <span className="text-gray-300">{item.itemClass}</span>
+        </div>
+      )}
+
+      {/* Requirements */}
+      {item.requirements.length > 0 && (
+        <div className="text-gray-400 mb-1">
+          Requires: <span className="text-red-400">{item.requirements.join(', ')}</span>
+        </div>
+      )}
+
+      {/* Separator */}
+      {(item.requirements.length > 0 || item.itemClass) && (
+        <div className="border-t border-gray-600 my-3"></div>
+      )}
+
+      {/* Item Level */}
+      {item.itemLevel && (
+        <>
+          <div className="text-gray-400 mb-3">
+            Item Level: <span className="text-gray-300">{item.itemLevel}</span>
+          </div>
+          <div className="border-t border-gray-600 my-3"></div>
+        </>
+      )}
+
+      {/* Granted Skill */}
+      {item.grantedSkill && (
+        <>
+          <div className="text-cyan-400 mb-3 flex items-center">
+            <div className="w-8 h-8 bg-purple-600 rounded mr-2 flex items-center justify-center text-xs">
+              💎
+            </div>
+            {item.grantedSkill}
+          </div>
+          <div className="border-t border-gray-600 my-3"></div>
+        </>
+      )}
+
+      {/* Stats */}
+      {item.stats.length > 0 && (
+        <div className="space-y-1 mb-3">
+          {item.stats.map((stat, index) => (
+            <div key={index} className={getStatColor(stat)}>
+              {formatStat(stat)}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Note/Price */}
+      {item.note && (
+        <>
+          <div className="border-t border-gray-600 my-3"></div>
+          <div className="text-center">
+            <div className="text-gray-400 text-xs mb-1">ASKING PRICE:</div>
+            <div className="text-yellow-400 font-bold flex items-center justify-center">
+              {item.note.replace('~b/o', '').trim()}
+              <span className="ml-1">⚜</span> Divine Orb
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ItemTooltip;
