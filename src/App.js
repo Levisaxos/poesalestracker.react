@@ -3,6 +3,8 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import ActiveItems from './pages/ActiveItems';
 import SoldItems from './pages/SoldItems';
+import { ItemsProvider } from './context/ItemsContext';
+import { ToastProvider } from './context/ToastContext';
 import { ROUTES } from './utils/constants';
 
 function App() {
@@ -22,9 +24,13 @@ function App() {
   };
 
   return (
-    <Layout currentPage={currentPage} onPageChange={setCurrentPage}>
-      {renderPage()}
-    </Layout>
+    <ToastProvider>
+      <ItemsProvider>
+        <Layout currentPage={currentPage} onPageChange={setCurrentPage}>
+          {renderPage()}
+        </Layout>
+      </ItemsProvider>
+    </ToastProvider>
   );
 }
 

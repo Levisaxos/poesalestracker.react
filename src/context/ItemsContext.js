@@ -18,7 +18,14 @@ const ACTIONS = {
 const initialState = {
   items: [],
   loading: false,
-  error: null
+  error: null,
+  nextId: 1
+};
+
+// Helper function to generate next integer ID
+const getNextId = (items) => {
+  if (items.length === 0) return 1;
+  return Math.max(...items.map(item => item.id || 0)) + 1;
 };
 
 // Reducer
@@ -28,6 +35,7 @@ const itemsReducer = (state, action) => {
       return {
         ...state,
         items: action.payload,
+        nextId: getNextId(action.payload),
         loading: false,
         error: null
       };
@@ -35,13 +43,14 @@ const itemsReducer = (state, action) => {
     case ACTIONS.ADD_ITEM:
       const newItem = {
         ...action.payload,
-        id: Date.now() + Math.random(), // Generate unique ID
+        id: state.nextId,
         dateAdded: new Date().toISOString(),
         status: ITEM_STATUS.ACTIVE
       };
       return {
         ...state,
         items: [newItem, ...state.items],
+        nextId: state.nextId + 1,
         error: null
       };
 
@@ -96,6 +105,13 @@ const itemsReducer = (state, action) => {
   }
 };
 
+// Currency conversion rates (normalized to chaos orbs)
+const CURRENCY_RATES = {
+  chaos: 1,
+  divine: 200,
+  exalted: 150
+};
+
 // Provider component
 export const ItemsProvider = ({ children }) => {
   const [state, dispatch] = useReducer(itemsReducer, initialState);
@@ -106,7 +122,12 @@ export const ItemsProvider = ({ children }) => {
       const savedItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
       if (savedItems) {
         const parsedItems = JSON.parse(savedItems);
-        dispatch({ type: ACTIONS.SET_ITEMS, payload: parsedItems });
+        // Ensure all items have integer IDs
+        const normalizedItems = parsedItems.map((item, index) => ({
+          ...item,
+          id: item.id && Number.isInteger(item.id) ? item.id : index + 1
+        }));
+        dispatch({ type: ACTIONS.SET_ITEMS, payload: normalizedItems });
       } else {
         dispatch({ type: ACTIONS.SET_ITEMS, payload: [] });
       }
@@ -126,21 +147,28 @@ export const ItemsProvider = ({ children }) => {
     }
   }, [state.items]);
 
+  // Helper function to convert price to chaos orbs
+  const convertToChaos = (price) => {
+    if (!price || !price.amount) return 0;
+    const rate = CURRENCY_RATES[price.currency] || 1;
+    return price.amount * rate;
+  };
+
   // Action creators
   const addItem = (item) => {
     dispatch({ type: ACTIONS.ADD_ITEM, payload: item });
   };
 
   const updateItem = (id, updates) => {
-    dispatch({ type: ACTIONS.UPDATE_ITEM, payload: { id, updates } });
+    dispatch({ type: ACTIONS.UPDATE_ITEM, payload: { id: parseInt(id), updates } });
   };
 
   const deleteItem = (id) => {
-    dispatch({ type: ACTIONS.DELETE_ITEM, payload: id });
+    dispatch({ type: ACTIONS.DELETE_ITEM, payload: parseInt(id) });
   };
 
   const markAsSold = (id) => {
-    dispatch({ type: ACTIONS.MARK_AS_SOLD, payload: id });
+    dispatch({ type: ACTIONS.MARK_AS_SOLD, payload: parseInt(id) });
   };
 
   const setError = (error) => {
@@ -156,21 +184,30 @@ export const ItemsProvider = ({ children }) => {
   const soldItems = state.items.filter(item => item.status === ITEM_STATUS.SOLD);
   
   const totalActiveValue = activeItems.reduce((sum, item) => {
-    if (item.price && item.price.amount) {
-      // Convert all currencies to chaos for calculation (simplified)
-      const multipliers = { chaos: 1, divine: 200, exalted: 150 }; // Example rates
-      return sum + (item.price.amount * (multipliers[item.price.currency] || 1));
-    }
-    return sum;
+    return sum + convertToChaos(item.price);
   }, 0);
 
   const totalRevenue = soldItems.reduce((sum, item) => {
-    if (item.price && item.price.amount) {
-      const multipliers = { chaos: 1, divine: 200, exalted: 150 };
-      return sum + (item.price.amount * (multipliers[item.price.currency] || 1));
-    }
-    return sum;
+    return sum + convertToChaos(item.price);
   }, 0);
+
+  // Statistics
+  const getItemStats = () => {
+    return {
+      totalItems: state.items.length,
+      activeCount: activeItems.length,
+      soldCount: soldItems.length,
+      totalActiveValueChaos: Math.round(totalActiveValue),
+      totalRevenueChaos: Math.round(totalRevenue),
+      averageSalePrice: soldItems.length > 0 ? Math.round(totalRevenue / soldItems.length) : 0,
+      recentSales: soldItems.filter(item => {
+        if (!item.dateSold) return false;
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return new Date(item.dateSold) > weekAgo;
+      }).length
+    };
+  };
 
   const value = {
     // State
@@ -183,6 +220,7 @@ export const ItemsProvider = ({ children }) => {
     // Stats
     totalActiveValue,
     totalRevenue,
+    stats: getItemStats(),
     
     // Actions
     addItem,
@@ -190,7 +228,10 @@ export const ItemsProvider = ({ children }) => {
     deleteItem,
     markAsSold,
     setError,
-    clearError
+    clearError,
+    
+    // Helper functions
+    convertToChaos
   };
 
   return (
