@@ -1,3 +1,4 @@
+// src/context/ItemsContext.js
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import { STORAGE_KEYS, ITEM_STATUS } from '../utils/constants';
 
@@ -11,6 +12,7 @@ const ACTIONS = {
   UPDATE_ITEM_PRICE: 'UPDATE_ITEM_PRICE',
   DELETE_ITEM: 'DELETE_ITEM',
   MARK_AS_SOLD: 'MARK_AS_SOLD',
+  REPLACE_ALL_ITEMS: 'REPLACE_ALL_ITEMS', // New action for import
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR'
 };
@@ -37,6 +39,21 @@ const itemsReducer = (state, action) => {
         ...state,
         items: action.payload,
         nextId: getNextId(action.payload),
+        loading: false,
+        error: null
+      };
+
+    case ACTIONS.REPLACE_ALL_ITEMS:
+      // New action specifically for import functionality
+      const normalizedItems = action.payload.map((item, index) => ({
+        ...item,
+        id: item.id && Number.isInteger(item.id) ? item.id : getNextId(action.payload) + index
+      }));
+      
+      return {
+        ...state,
+        items: normalizedItems,
+        nextId: getNextId(normalizedItems),
         loading: false,
         error: null
       };
@@ -218,6 +235,11 @@ export const ItemsProvider = ({ children }) => {
     dispatch({ type: ACTIONS.SET_ERROR, payload: null });
   };
 
+  // New method for import functionality
+  const setItems = (items) => {
+    dispatch({ type: ACTIONS.REPLACE_ALL_ITEMS, payload: items });
+  };
+
   // Computed values
   const activeItems = state.items.filter(item => item.status === ITEM_STATUS.ACTIVE);
   const soldItems = state.items.filter(item => item.status === ITEM_STATUS.SOLD);
@@ -269,6 +291,7 @@ export const ItemsProvider = ({ children }) => {
     markAsSold,
     setError,
     clearError,
+    setItems, // New method for import
     
     // Helper functions
     convertToChaos

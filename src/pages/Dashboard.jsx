@@ -1,11 +1,14 @@
+// src/pages/Dashboard.jsx
 import { useState } from 'react';
 import ItemTooltip from '../components/items/ItemTooltip';
 import AddItemModal from '../components/items/AddItemModal';
+import ImportExportModal from '../components/common/ImportExportModal';
 import Button from '../components/common/Button';
 import { useItems } from '../context/ItemsContext';
 
 const Dashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const { activeItems, soldItems, totalActiveValue, totalRevenue } = useItems();
 
   const recentItems = activeItems.slice(0, 5); // Show last 5 items
@@ -30,9 +33,17 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
           <p className="text-gray-400">Overview of your PoE2 sales activity</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          + Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="secondary" 
+            onClick={() => setIsImportExportModalOpen(true)}
+          >
+            📦 Import/Export
+          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            + Add Item
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -136,22 +147,30 @@ const Dashboard = () => {
               <span className="text-white">Add New Item</span>
               <span className="text-gray-400">+</span>
             </button>
-            <button className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-left">
-              <span className="text-white">Import Data</span>
-              <span className="text-gray-400">📥</span>
+            <button 
+              onClick={() => setIsImportExportModalOpen(true)}
+              className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-left"
+            >
+              <span className="text-white">Import/Export Data</span>
+              <span className="text-gray-400">📦</span>
             </button>
             <button className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-left">
-              <span className="text-white">Export Data</span>
-              <span className="text-gray-400">📤</span>
+              <span className="text-white">View Statistics</span>
+              <span className="text-gray-400">📊</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Add Item Modal */}
+      {/* Modals */}
       <AddItemModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
+      />
+      
+      <ImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
       />
     </div>
   );

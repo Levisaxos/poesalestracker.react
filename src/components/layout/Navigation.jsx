@@ -1,9 +1,19 @@
+// src/components/layout/Navigation.jsx
+import { useState } from 'react';
 import { NAV_ITEMS } from '../../utils/constants';
+import ImportExportModal from '../common/ImportExportModal';
 
 const Navigation = ({ currentPage, onPageChange, isMobileOpen, onMobileClose }) => {
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
+
   const handleNavClick = (path) => {
     onPageChange(path);
     onMobileClose(); // Close mobile menu when navigating
+  };
+
+  const handleImportExportClick = () => {
+    setIsImportExportModalOpen(true);
+    onMobileClose(); // Close mobile menu when opening modal
   };
 
   return (
@@ -60,13 +70,22 @@ const Navigation = ({ currentPage, onPageChange, isMobileOpen, onMobileClose }) 
 
           {/* Bottom actions */}
           <div className="border-t border-gray-700 p-3 space-y-1">
-            <button className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors">
-              <span className="mr-3 text-lg">📤</span>
+            <button 
+              onClick={handleImportExportClick}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors"
+            >
+              <span className="mr-3 text-lg">📦</span>
               Import/Export
             </button>
           </div>
         </div>
       </nav>
+
+      {/* Import/Export Modal */}
+      <ImportExportModal
+        isOpen={isImportExportModalOpen}
+        onClose={() => setIsImportExportModalOpen(false)}
+      />
     </>
   );
 };
