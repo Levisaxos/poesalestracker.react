@@ -1,4 +1,4 @@
-import { RARITIES, ITEM_STATUS, ITEM_CLASS_LIST, VALIDATION_RULES } from './constants';
+import { RARITIES, ITEM_STATUS, ITEM_CLASS_LIST, VALIDATION_RULES, CURRENCIES } from './constants';
 
 /**
  * Parse item text from Path of Exile 2 clipboard format
@@ -96,6 +96,15 @@ export const parseItemText = (rawText) => {
       const levelText = line.replace('Item Level:', '').trim();
       item.itemLevel = parseInt(levelText) || null;
     }
+    // Parse Note (buyout price)
+    else if (line.startsWith('Note:')) {
+      const noteText = line.replace('Note:', '').trim();
+      const parsedPrice = parseNotePrice(noteText);
+      if (parsedPrice) {
+        item.price = parsedPrice;
+      }
+      // Don't add the note to properties since it's parsed as price
+    }
     // Parse Properties (everything else)
     else if (line && !line.startsWith('--------')) {
       if (item.properties.length < VALIDATION_RULES.PROPERTIES_MAX_COUNT) {
@@ -107,6 +116,61 @@ export const parseItemText = (rawText) => {
   }
 
   return item;
+};
+
+/**
+ * Parse buyout price from note text
+ * @param {string} noteText - Note text containing price information
+ * @returns {Object|null} Price object with amount and currency, or null if not found
+ */
+const parseNotePrice = (noteText) => {
+  if (!noteText || typeof noteText !== 'string') {
+    return null;
+  }
+
+  // Common price patterns in PoE:
+  // ~b/o 34 divine
+  // ~price 15 chaos
+  // ~buyout 2.5 exalt
+  // b/o 10 div
+  // price 50 c
+  
+  const patterns = [
+    // Standard patterns with currency names
+    /(?:~?(?:b\/o|buyout|price)\s+)(\d+(?:\.\d+)?)\s+(divine?|div)/i,
+    /(?:~?(?:b\/o|buyout|price)\s+)(\d+(?:\.\d+)?)\s+(chaos?|c)/i,
+    /(?:~?(?:b\/o|buyout|price)\s+)(\d+(?:\.\d+)?)\s+(exalt(?:ed)?|ex|e)/i,
+    
+    // Just number and currency without prefix
+    /(\d+(?:\.\d+)?)\s+(divine?|div)/i,
+    /(\d+(?:\.\d+)?)\s+(chaos?|c)/i,
+    /(\d+(?:\.\d+)?)\s+(exalt(?:ed)?|ex|e)/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = noteText.match(pattern);
+    if (match) {
+      const amount = parseFloat(match[1]);
+      const currencyText = match[2].toLowerCase();
+      
+      let currency = CURRENCIES.CHAOS; // default
+      
+      if (currencyText.includes('div') || currencyText.includes('divine')) {
+        currency = CURRENCIES.DIVINE;
+      } else if (currencyText.includes('ex') || currencyText.includes('exalt')) {
+        currency = CURRENCIES.EXALTED;
+      } else if (currencyText.includes('c') || currencyText.includes('chaos')) {
+        currency = CURRENCIES.CHAOS;
+      }
+      
+      return {
+        amount: amount,
+        currency: currency
+      };
+    }
+  }
+  
+  return null;
 };
 
 /**
@@ -287,6 +351,10 @@ export const generateItemPreview = (item) => {
   
   if (item.properties.length > 0) {
     preview += `\nProperties: ${item.properties.length}`;
+  }
+
+  if (item.price) {
+    preview += `\nPrice: ${item.price.amount} ${item.price.currency}`;
   }
 
   return preview;

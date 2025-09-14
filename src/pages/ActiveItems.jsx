@@ -135,24 +135,24 @@ const ActiveItems = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {sortedItems.map((item) => (
           <div key={item.id} className="bg-gray-800 rounded-lg border border-gray-700 hover:border-orange-500 transition-colors overflow-hidden">
-            <div className="p-4">
+            <div>
               <ItemTooltip item={item} showPrice={true} className="w-full border-none bg-transparent p-0" />
             </div>
             
             {/* Action Buttons */}
             <div className="px-4 pb-4 border-t border-gray-600 pt-4 flex gap-2">
-              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm font-medium transition-colors">
-                ✏️ Edit
+              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors">
+                ✏️ Edit Price
               </button>
               <button 
                 onClick={() => handleMarkSold(item)}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm font-medium transition-colors"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
               >
                 💰 Mark Sold
               </button>
               <button 
                 onClick={() => handleDelete(item)}
-                className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm font-medium transition-colors"
+                className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
               >
                 🗑️
               </button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import ItemTooltip from './ItemTooltip';
@@ -16,6 +16,16 @@ const AddItemModal = ({ isOpen, onClose }) => {
   
   const { addItem } = useItems();
   const { showSuccess, showError } = useToast();
+
+  // Auto-populate price when item is parsed and contains a buyout note
+  useEffect(() => {
+    if (parsedItem?.price) {
+      setPrice({
+        amount: parsedItem.price.amount.toString(),
+        currency: parsedItem.price.currency
+      });
+    }
+  }, [parsedItem]);
 
   const handleTextChange = (e) => {
     const text = e.target.value;
@@ -36,6 +46,8 @@ const AddItemModal = ({ isOpen, onClose }) => {
     } else {
       setParsedItem(null);
       setErrors([]);
+      // Reset price when clearing item text
+      setPrice({ amount: '', currency: CURRENCIES.CHAOS });
     }
   };
 
@@ -91,6 +103,13 @@ const AddItemModal = ({ isOpen, onClose }) => {
         }
       };
 
+      // Remove the parsed price from the item object to avoid duplication
+      delete itemWithPrice.price;
+      itemWithPrice.price = {
+        amount: parseFloat(price.amount),
+        currency: price.currency
+      };
+
       addItem(itemWithPrice);
       showSuccess(`${parsedItem.name} added successfully!`);
       
@@ -132,6 +151,8 @@ Adds 15 to 28 Lightning Damage to Spells
 --------
 Grants Skill: Lightning Bolt Level 1
 --------
+Note: ~b/o 34 divine
+--------
 Corrupted`;
   };
 
@@ -146,8 +167,8 @@ Corrupted`;
           <ul className="text-sm text-gray-400 space-y-1">
             <li>1. Copy item text from Path of Exile 2 (Ctrl+C while hovering over item)</li>
             <li>2. Paste the text in the field below</li>
-            <li>3. Set your asking price</li>
-            <li>4. Click "Add Item" to save</li>
+            <li>3. Price will auto-populate from buyout notes (e.g. "Note: ~b/o 34 divine")</li>
+            <li>4. Adjust price if needed and click "Add Item" to save</li>
           </ul>
         </div>
 
@@ -165,7 +186,7 @@ Corrupted`;
             maxLength={5000}
           />
           <div className="text-xs text-gray-500 mt-1">
-            {itemText.length}/5000 characters
+            {itemText.length}/5000 characters            
           </div>
         </div>
 
@@ -173,7 +194,7 @@ Corrupted`;
         <div className="grid grid-cols-3 gap-4">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Price *
+              Price * {parsedItem?.price && <span className="text-green-400 text-xs">(auto-populated)</span>}
             </label>
             <input
               type="number"
@@ -219,7 +240,7 @@ Corrupted`;
               </div>
             </div>
           </div>
-        )}
+        )}        
 
         {/* Preview */}
         {parsedItem && errors.length === 0 && (
