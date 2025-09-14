@@ -8,6 +8,7 @@ import { ToastProvider } from './context/ToastContext';
 import { ROUTES } from './utils/constants';
 
 function App() {
+  document.title = 'Poe Sales Tracker';
   const [currentPage, setCurrentPage] = useState(ROUTES.DASHBOARD);
 
   const renderPage = () => {
