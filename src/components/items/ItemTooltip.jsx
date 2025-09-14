@@ -25,10 +25,18 @@ const ItemTooltip = ({ item, showPrice = false, className = "" }) => {
     if (property.includes('Grants Skill')) {
       return 'text-purple-400';
     }
-    if (property.includes('(rune)') || property.includes('(desecrated)')) {
-      return 'text-green-400';
-    }
     return 'text-gray-300';
+  };
+
+  const getRuneColor = (runeType) => {
+    switch (runeType) {
+      case 'rune':
+        return 'text-green-400';
+      case 'desecrated':
+        return 'text-red-400';
+      default:
+        return 'text-green-400';
+    }
   };
 
   return (
@@ -64,11 +72,15 @@ const ItemTooltip = ({ item, showPrice = false, className = "" }) => {
         </>
       )}
 
-      {/* Sockets */}
-      {item.sockets && (
+      {/* Socketed Runes */}
+      {item.socketedRunes && item.socketedRunes.length > 0 && (
         <>
-          <div className="text-gray-300 text-xs mb-1">
-            {item.sockets}
+          <div className="space-y-1">
+            {item.socketedRunes.map((rune, index) => (
+              <div key={rune.id || index} className={`text-xs ${getRuneColor(rune.type)} whitespace-nowrap`}>
+                {rune.property.replace('(rune)', '').replace('(desecrated)', '').trim()} ({rune.type})
+              </div>
+            ))}
           </div>
           <div className="border-t border-gray-600 my-2"></div>
         </>

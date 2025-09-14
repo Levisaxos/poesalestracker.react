@@ -27,7 +27,8 @@ export const parseItemText = (rawText) => {
     rarityId: getRarityId(RARITIES.NORMAL),
     requirements: {},
     properties: [],
-    sockets: '',
+    sockets: '', // This will now show formatted runes instead of raw socket data
+    socketedRunes: [], // New field for individual runes
     itemLevel: null,
     price: null,
     status: ITEM_STATUS.ACTIVE,
@@ -73,7 +74,9 @@ export const parseItemText = (rawText) => {
     currentIndex++;
   }
 
-  // Parse remaining properties
+  // Parse remaining properties and collect runes
+  const runeProperties = [];
+  
   while (currentIndex < lines.length) {
     const line = lines[currentIndex].trim();
     
@@ -87,9 +90,10 @@ export const parseItemText = (rawText) => {
       const requiresText = line.replace('Requires:', '').trim();
       item.requirements = parseRequirements(requiresText);
     }
-    // Parse Sockets
+    // Parse Sockets - we'll process this differently now
     else if (line.startsWith('Sockets:')) {
-      item.sockets = line.replace('Sockets:', '').trim();
+      // For now, we'll skip the raw socket line and build it from runes later
+      // item.sockets = line.replace('Sockets:', '').trim();
     }
     // Parse Item Level
     else if (line.startsWith('Item Level:')) {
@@ -105,7 +109,14 @@ export const parseItemText = (rawText) => {
       }
       // Don't add the note to properties since it's parsed as price
     }
-    // Parse Properties (everything else)
+    // Check if line contains a rune
+    else if (line.includes('(rune)')) {
+      runeProperties.push(line);
+    }
+    else if ( line.includes('(desecrated)')){
+        item.properties.push(line);
+    }
+    // Parse Properties (everything else that's not a rune)
     else if (line && !line.startsWith('--------')) {
       if (item.properties.length < VALIDATION_RULES.PROPERTIES_MAX_COUNT) {
         item.properties.push(line);
@@ -113,6 +124,24 @@ export const parseItemText = (rawText) => {
     }
 
     currentIndex++;
+  }
+
+  // Process runes and create socket display
+  if (runeProperties.length > 0) {
+    item.socketedRunes = runeProperties.map((runeProp, index) => ({
+      id: index + 1,
+      property: runeProp,
+      type: runeProp.includes('(desecrated)') ? 'desecrated' : 'rune'
+    }));
+
+    // Create formatted socket display
+    const runeDisplay = runeProperties.map((runeProp, index) => {
+      const cleanProp = runeProp.replace('(rune)', '').replace('(desecrated)', '').trim();
+      const type = runeProp.includes('(desecrated)') ? 'desecrated' : 'rune';
+      return `${cleanProp} (${type})`;
+    });
+    
+    item.sockets = runeDisplay.join('\n');
   }
 
   return item;
@@ -347,6 +376,10 @@ export const generateItemPreview = (item) => {
   
   if (item.itemLevel) {
     preview += `\nItem Level: ${item.itemLevel}`;
+  }
+  
+  if (item.socketedRunes && item.socketedRunes.length > 0) {
+    preview += `\nSocketed Runes: ${item.socketedRunes.length}`;
   }
   
   if (item.properties.length > 0) {
