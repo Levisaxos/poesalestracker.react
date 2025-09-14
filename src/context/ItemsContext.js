@@ -8,6 +8,7 @@ const ACTIONS = {
   SET_ITEMS: 'SET_ITEMS',
   ADD_ITEM: 'ADD_ITEM',
   UPDATE_ITEM: 'UPDATE_ITEM',
+  UPDATE_ITEM_PRICE: 'UPDATE_ITEM_PRICE',
   DELETE_ITEM: 'DELETE_ITEM',
   MARK_AS_SOLD: 'MARK_AS_SOLD',
   SET_LOADING: 'SET_LOADING',
@@ -45,7 +46,12 @@ const itemsReducer = (state, action) => {
         ...action.payload,
         id: state.nextId,
         dateAdded: new Date().toISOString(),
-        status: ITEM_STATUS.ACTIVE
+        status: ITEM_STATUS.ACTIVE,
+        priceHistory: action.payload.price ? [{
+          id: 1,
+          price: action.payload.price,
+          date: new Date().toISOString()
+        }] : []
       };
       return {
         ...state,
@@ -62,6 +68,30 @@ const itemsReducer = (state, action) => {
             ? { ...item, ...action.payload.updates }
             : item
         ),
+        error: null
+      };
+
+    case ACTIONS.UPDATE_ITEM_PRICE:
+      return {
+        ...state,
+        items: state.items.map(item => {
+          if (item.id === action.payload.id) {
+            const currentHistory = item.priceHistory || [];
+            const newHistoryEntry = {
+              id: currentHistory.length + 1,
+              price: action.payload.price,
+              date: new Date().toISOString()
+            };
+            
+            return {
+              ...item,
+              price: action.payload.price,
+              priceHistory: [...currentHistory, newHistoryEntry],
+              lastPriceUpdate: new Date().toISOString()
+            };
+          }
+          return item;
+        }),
         error: null
       };
 
@@ -122,10 +152,15 @@ export const ItemsProvider = ({ children }) => {
       const savedItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
       if (savedItems) {
         const parsedItems = JSON.parse(savedItems);
-        // Ensure all items have integer IDs
+        // Ensure all items have integer IDs and price history
         const normalizedItems = parsedItems.map((item, index) => ({
           ...item,
-          id: item.id && Number.isInteger(item.id) ? item.id : index + 1
+          id: item.id && Number.isInteger(item.id) ? item.id : index + 1,
+          priceHistory: item.priceHistory || (item.price ? [{
+            id: 1,
+            price: item.price,
+            date: item.dateAdded || new Date().toISOString()
+          }] : [])
         }));
         dispatch({ type: ACTIONS.SET_ITEMS, payload: normalizedItems });
       } else {
@@ -161,6 +196,10 @@ export const ItemsProvider = ({ children }) => {
 
   const updateItem = (id, updates) => {
     dispatch({ type: ACTIONS.UPDATE_ITEM, payload: { id: parseInt(id), updates } });
+  };
+
+  const updateItemPrice = (id, price) => {
+    dispatch({ type: ACTIONS.UPDATE_ITEM_PRICE, payload: { id: parseInt(id), price } });
   };
 
   const deleteItem = (id) => {
@@ -225,6 +264,7 @@ export const ItemsProvider = ({ children }) => {
     // Actions
     addItem,
     updateItem,
+    updateItemPrice,
     deleteItem,
     markAsSold,
     setError,

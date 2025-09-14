@@ -2,6 +2,8 @@ import { useState } from 'react';
 import ItemTooltip from '../components/items/ItemTooltip';
 import SearchBar from '../components/common/SearchBar';
 import AddItemModal from '../components/items/AddItemModal';
+import EditPriceModal from '../components/items/EditPriceModal';
+import PriceHistoryModal from '../components/items/PriceHistoryModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import Button from '../components/common/Button';
 import { useItems } from '../context/ItemsContext';
@@ -11,6 +13,8 @@ const ActiveItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editPriceModal, setEditPriceModal] = useState({ isOpen: false, item: null });
+  const [priceHistoryModal, setPriceHistoryModal] = useState({ isOpen: false, item: null });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', itemId: null, itemName: '' });
 
   const { activeItems, markAsSold, deleteItem, totalActiveValue } = useItems();
@@ -40,6 +44,14 @@ const ActiveItems = () => {
         return 0;
     }
   });
+
+  const handleEditPrice = (item) => {
+    setEditPriceModal({ isOpen: true, item });
+  };
+
+  const handleViewPriceHistory = (item) => {
+    setPriceHistoryModal({ isOpen: true, item });
+  };
 
   const handleMarkSold = (item) => {
     setConfirmModal({
@@ -140,22 +152,37 @@ const ActiveItems = () => {
             </div>
             
             {/* Action Buttons */}
-            <div className="px-4 pb-4 border-t border-gray-600 pt-4 flex gap-2">
-              <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors">
-                ✏️ Edit Price
-              </button>
-              <button 
-                onClick={() => handleMarkSold(item)}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
-              >
-                💰 Mark Sold
-              </button>
-              <button 
-                onClick={() => handleDelete(item)}
-                className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
-              >
-                🗑️
-              </button>
+            <div className="px-4 pb-4 border-t border-gray-600 pt-4">
+              <div className="flex gap-2 mb-2">
+                <button 
+                  onClick={() => handleEditPrice(item)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
+                >
+                  ✏️ Edit Price
+                </button>
+                <button 
+                  onClick={() => handleMarkSold(item)}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
+                >
+                  💰 Mark Sold
+                </button>
+                <button 
+                  onClick={() => handleDelete(item)}
+                  className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-xs font-medium transition-colors"
+                >
+                  🗑️
+                </button>
+              </div>
+              
+              {/* Price History Link */}
+              {item.priceHistory && item.priceHistory.length > 1 && (
+                <button
+                  onClick={() => handleViewPriceHistory(item)}
+                  className="w-full text-xs text-blue-400 hover:text-blue-300 underline py-1"
+                >
+                  📊 View Price History ({item.priceHistory.length - 1} changes)
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -183,6 +210,20 @@ const ActiveItems = () => {
       <AddItemModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
+      />
+
+      {/* Edit Price Modal */}
+      <EditPriceModal
+        isOpen={editPriceModal.isOpen}
+        onClose={() => setEditPriceModal({ isOpen: false, item: null })}
+        item={editPriceModal.item}
+      />
+
+      {/* Price History Modal */}
+      <PriceHistoryModal
+        isOpen={priceHistoryModal.isOpen}
+        onClose={() => setPriceHistoryModal({ isOpen: false, item: null })}
+        item={priceHistoryModal.item}
       />
 
       {/* Confirmation Modal */}

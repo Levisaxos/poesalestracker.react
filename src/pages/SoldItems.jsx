@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ItemTooltip from '../components/items/ItemTooltip';
 import SearchBar from '../components/common/SearchBar';
+import PriceHistoryModal from '../components/items/PriceHistoryModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import { useItems } from '../context/ItemsContext';
 import { useToast } from '../context/ToastContext';
@@ -8,6 +9,7 @@ import { useToast } from '../context/ToastContext';
 const SoldItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('recently-sold');
+  const [priceHistoryModal, setPriceHistoryModal] = useState({ isOpen: false, item: null });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, itemId: null, itemName: '' });
 
   const { soldItems, deleteItem, totalRevenue } = useItems();
@@ -54,6 +56,10 @@ const SoldItems = () => {
     const diffTime = Math.abs(sold - added);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  const handleViewPriceHistory = (item) => {
+    setPriceHistoryModal({ isOpen: true, item });
   };
 
   const handleDelete = (item) => {
@@ -177,11 +183,28 @@ const SoldItems = () => {
                   </div>
                 </div>
 
+                {/* Price History Indicator */}
+                {item.priceHistory && item.priceHistory.length > 1 && (
+                  <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3">
+                    <p className="text-sm text-blue-300">
+                      📊 Price was adjusted {item.priceHistory.length - 1} time(s) before selling
+                    </p>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
                   <button className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors">
                     📊 View Details
                   </button>
+                  {item.priceHistory && item.priceHistory.length > 0 && (
+                    <button 
+                      onClick={() => handleViewPriceHistory(item)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+                    >
+                      💰 Price History
+                    </button>
+                  )}
                   <button className="bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors">
                     🔄 Relist Similar
                   </button>
@@ -213,6 +236,13 @@ const SoldItems = () => {
           )}
         </div>
       )}
+
+      {/* Price History Modal */}
+      <PriceHistoryModal
+        isOpen={priceHistoryModal.isOpen}
+        onClose={() => setPriceHistoryModal({ isOpen: false, item: null })}
+        item={priceHistoryModal.item}
+      />
 
       {/* Confirmation Modal */}
       <ConfirmationModal
