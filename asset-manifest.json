@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/poesalestracker.react/static/css/main.61be4289.css",
-    "main.js": "/poesalestracker.react/static/js/main.6987e4a7.js",
+    "main.js": "/poesalestracker.react/static/js/main.f187fd47.js",
     "static/js/453.3cc48735.chunk.js": "/poesalestracker.react/static/js/453.3cc48735.chunk.js",
     "index.html": "/poesalestracker.react/index.html",
     "main.61be4289.css.map": "/poesalestracker.react/static/css/main.61be4289.css.map",
-    "main.6987e4a7.js.map": "/poesalestracker.react/static/js/main.6987e4a7.js.map",
+    "main.f187fd47.js.map": "/poesalestracker.react/static/js/main.f187fd47.js.map",
     "453.3cc48735.chunk.js.map": "/poesalestracker.react/static/js/453.3cc48735.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.61be4289.css",
-    "static/js/main.6987e4a7.js"
+    "static/js/main.f187fd47.js"
   ]
 }
