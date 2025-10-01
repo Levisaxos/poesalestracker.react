@@ -9,7 +9,7 @@ import { useToast } from '../context/ToastContext';
 const SoldItems = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('recently-sold');
-  const [priceHistoryModal, setPriceHistoryModal] = useState({ isOpen: false, item: null });
+  const [priceHistoryModal, setPriceHistoryModal] = useState({ isOpen: false, itemId: null });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, itemId: null, itemName: '' });
 
   const { soldItems, deleteItem, totalRevenue } = useItems();
@@ -59,7 +59,7 @@ const SoldItems = () => {
   };
 
   const handleViewPriceHistory = (item) => {
-    setPriceHistoryModal({ isOpen: true, item });
+    setPriceHistoryModal({ isOpen: true, itemId: item.id });
   };
 
   const handleDelete = (item) => {
@@ -240,8 +240,8 @@ const SoldItems = () => {
       {/* Price History Modal */}
       <PriceHistoryModal
         isOpen={priceHistoryModal.isOpen}
-        onClose={() => setPriceHistoryModal({ isOpen: false, item: null })}
-        item={priceHistoryModal.item}
+        onClose={() => setPriceHistoryModal({ isOpen: false, itemId: null })}
+        itemId={priceHistoryModal.itemId}
       />
 
       {/* Confirmation Modal */}

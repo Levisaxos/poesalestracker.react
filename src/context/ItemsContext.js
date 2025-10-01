@@ -12,7 +12,8 @@ const ACTIONS = {
   UPDATE_ITEM_PRICE: 'UPDATE_ITEM_PRICE',
   DELETE_ITEM: 'DELETE_ITEM',
   MARK_AS_SOLD: 'MARK_AS_SOLD',
-  REPLACE_ALL_ITEMS: 'REPLACE_ALL_ITEMS', // New action for import
+  REPLACE_ALL_ITEMS: 'REPLACE_ALL_ITEMS',
+  REMOVE_PRICE_HISTORY_ENTRY: 'REMOVE_PRICE_HISTORY_ENTRY',
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR'
 };
@@ -31,6 +32,12 @@ const getNextId = (items) => {
   return Math.max(...items.map(item => item.id || 0)) + 1;
 };
 
+// Helper function to get next history ID for an item
+const getNextHistoryId = (priceHistory) => {
+  if (!priceHistory || priceHistory.length === 0) return 1;
+  return Math.max(...priceHistory.map(entry => entry.id || 0)) + 1;
+};
+
 // Reducer
 const itemsReducer = (state, action) => {
   switch (action.type) {
@@ -44,7 +51,6 @@ const itemsReducer = (state, action) => {
       };
 
     case ACTIONS.REPLACE_ALL_ITEMS:
-      // New action specifically for import functionality
       const normalizedItems = action.payload.map((item, index) => ({
         ...item,
         id: item.id && Number.isInteger(item.id) ? item.id : getNextId(action.payload) + index
@@ -95,7 +101,7 @@ const itemsReducer = (state, action) => {
           if (item.id === action.payload.id) {
             const currentHistory = item.priceHistory || [];
             const newHistoryEntry = {
-              id: currentHistory.length + 1,
+              id: getNextHistoryId(currentHistory),
               price: action.payload.price,
               date: new Date().toISOString()
             };
@@ -104,6 +110,35 @@ const itemsReducer = (state, action) => {
               ...item,
               price: action.payload.price,
               priceHistory: [...currentHistory, newHistoryEntry],
+              lastPriceUpdate: new Date().toISOString()
+            };
+          }
+          return item;
+        }),
+        error: null
+      };
+
+    case ACTIONS.REMOVE_PRICE_HISTORY_ENTRY:
+      return {
+        ...state,
+        items: state.items.map(item => {
+          if (item.id === action.payload.itemId) {
+            const updatedHistory = item.priceHistory.filter(
+              entry => entry.id !== action.payload.historyId
+            );
+            
+            // If we're removing the last entry, update the current price to the previous one
+            let updatedPrice = item.price;
+            if (updatedHistory.length > 0) {
+              // Sort by date to get the most recent remaining entry
+              const sortedHistory = updatedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+              updatedPrice = sortedHistory[0].price;
+            }
+            
+            return {
+              ...item,
+              price: updatedHistory.length > 0 ? updatedPrice : null,
+              priceHistory: updatedHistory,
               lastPriceUpdate: new Date().toISOString()
             };
           }
@@ -169,7 +204,6 @@ export const ItemsProvider = ({ children }) => {
       const savedItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
       if (savedItems) {
         const parsedItems = JSON.parse(savedItems);
-        // Ensure all items have integer IDs and price history
         const normalizedItems = parsedItems.map((item, index) => ({
           ...item,
           id: item.id && Number.isInteger(item.id) ? item.id : index + 1,
@@ -227,6 +261,13 @@ export const ItemsProvider = ({ children }) => {
     dispatch({ type: ACTIONS.MARK_AS_SOLD, payload: parseInt(id) });
   };
 
+  const removePriceHistoryEntry = (itemId, historyId) => {
+    dispatch({ 
+      type: ACTIONS.REMOVE_PRICE_HISTORY_ENTRY, 
+      payload: { itemId: parseInt(itemId), historyId: parseInt(historyId) }
+    });
+  };
+
   const setError = (error) => {
     dispatch({ type: ACTIONS.SET_ERROR, payload: error });
   };
@@ -235,7 +276,6 @@ export const ItemsProvider = ({ children }) => {
     dispatch({ type: ACTIONS.SET_ERROR, payload: null });
   };
 
-  // New method for import functionality
   const setItems = (items) => {
     dispatch({ type: ACTIONS.REPLACE_ALL_ITEMS, payload: items });
   };
@@ -289,9 +329,10 @@ export const ItemsProvider = ({ children }) => {
     updateItemPrice,
     deleteItem,
     markAsSold,
+    removePriceHistoryEntry,
     setError,
     clearError,
-    setItems, // New method for import
+    setItems,
     
     // Helper functions
     convertToChaos

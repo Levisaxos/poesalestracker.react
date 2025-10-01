@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { useItems } from '../../context/ItemsContext';
@@ -7,18 +7,37 @@ import { CURRENCIES, VALIDATION_RULES } from '../../utils/constants';
 import { validatePrice } from '../../utils/itemParser';
 
 const EditPriceModal = ({ isOpen, onClose, item }) => {
-  const [price, setPrice] = useState(() => {
-    if (!item?.price) return { amount: '', currency: CURRENCIES.CHAOS };
-    return {
-      amount: item.price.amount.toString(),
-      currency: item.price.currency
-    };
-  });
+  const [price, setPrice] = useState({ amount: '', currency: CURRENCIES.CHAOS });
   const [errors, setErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const amountInputRef = useRef(null);
   
   const { updateItemPrice } = useItems();
   const { showSuccess, showError } = useToast();
+
+  // Initialize price when modal opens or item changes
+  useEffect(() => {
+    if (item?.price) {
+      setPrice({
+        amount: item.price.amount.toString(),
+        currency: item.price.currency
+      });
+    } else {
+      setPrice({ amount: '', currency: CURRENCIES.CHAOS });
+    }
+    setErrors([]);
+  }, [item, isOpen]);
+
+  // Focus and select all text when modal opens
+  useEffect(() => {
+    if (isOpen && amountInputRef.current) {
+      // Small delay to ensure modal is fully rendered
+      setTimeout(() => {
+        amountInputRef.current.focus();
+        amountInputRef.current.select();
+      }, 100);
+    }
+  }, [isOpen]);
 
   const handlePriceChange = (field, value) => {
     setPrice(prev => ({
@@ -75,6 +94,7 @@ const EditPriceModal = ({ isOpen, onClose, item }) => {
   };
 
   const handleClose = () => {
+    // Reset to original price when closing
     if (item?.price) {
       setPrice({
         amount: item.price.amount.toString(),
@@ -86,6 +106,16 @@ const EditPriceModal = ({ isOpen, onClose, item }) => {
     setErrors([]);
     setIsSubmitting(false);
     onClose();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && canSubmit) {
+      e.preventDefault();
+      handleSubmit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleClose();
+    }
   };
 
   if (!item) return null;
@@ -113,15 +143,16 @@ const EditPriceModal = ({ isOpen, onClose, item }) => {
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <input
+                ref={amountInputRef}
                 type="number"
                 value={price.amount}
                 onChange={(e) => handlePriceChange('amount', e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Enter new price"
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 min={VALIDATION_RULES.PRICE_MIN_VALUE}
                 max={VALIDATION_RULES.PRICE_MAX_VALUE}
                 step="0.01"
-                autoFocus
               />
             </div>
             <div>
@@ -135,6 +166,9 @@ const EditPriceModal = ({ isOpen, onClose, item }) => {
                 <option value={CURRENCIES.EXALTED}>Exalted</option>
               </select>
             </div>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            💡 Press Enter to save, Escape to cancel
           </div>
         </div>
 
